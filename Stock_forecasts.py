@@ -12,28 +12,32 @@ import matplotlib.pyplot as plt
 from matplotlib import style
 import time, datetime
 
-#获取数据集
-dataset = quandl.get('WIKI/AAPL',start_date = '2003-12-31',end_date = '2023-12-31')
+# 获取数据集
+#dataset = quandl.get('WIKI/AAPL',start_date = '2003-12-31',end_date = '2023-12-31')
+#dataset.to_csv("D:/CUDA_project/stock_forecast/dataset/dataAAPL.csv")
+# 读取cvs数据
+dataset = pd.read_csv('D:/CUDA_project/stock_forecast/dataset/AAPL_Data.csv',index_col=False)
 # 定义预测列变量forecast_col，也就是收盘价
 forecast_col = 'Adj. Close'
 # 定义预测的天数forecast_out，也就是预测的数据长度，这里设置为所有数据的1%，得到的是一个整数
 # math.ceil(x) 返回不小于x的最接近的整数
 forecast_out = int(math.ceil(0.01 * len(dataset)))
 # 选取只用到的几列 开盘价，最高价，最低价，收盘价，交易额
-dataset = dataset[['Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
+dataset = dataset[['Date', 'Adj. Open', 'Adj. High', 'Adj. Low', 'Adj. Close', 'Adj. Volume']]
 # 构造特征数据HL_PCT、PCT_change
 dataset['HL_PCT'] = (dataset['Adj. High'] - dataset['Adj. Low']) / dataset['Adj. Low'] * 100.0
 dataset['PCT_change'] = (dataset['Adj. Close'] - dataset['Adj. Open']) / dataset['Adj. Open'] * 100.0
 
 # 选取真正用到的字段
-dataset = dataset[['Adj. Close', 'HL_PCT', 'PCT_change', 'Adj. Volume']]
+dataset = dataset[['Date', 'Adj. Close', 'HL_PCT', 'PCT_change', 'Adj. Volume']]
+print(dataset.head())
 # 空值预处理，这里的处理方法是将空值设置为一个比较难出现的值
 dataset.fillna(-99999, inplace=True)
-
+# 生成标签列
 # 将Adj. Close列数据往前移动1%行，也就是前forecast_out行数据舍掉，剩下后99%的数据往前移动
 # shift()函数，用于对dataframe中的数整体上移或下移，当为正数时，向下移。当为负数时，向上移。
 dataset['label'] = dataset[forecast_col].shift(-forecast_out)
-dataset.to_csv("D:/CUDA_project/stock_forecast/dataset/stock_regression.csv")
+dataset.to_csv("D:/CUDA_project/stock_forecast/dataset/AAPLDATA.csv")
 #dataset.head() #返回列表前n行数据,括号内为空默认返回五行
 #print(dataset.head())
 #去除label列所有的数据
@@ -79,7 +83,7 @@ one_day = 86400#一天等于86400秒
 
 #在data中新建列Forecast，用于存放预测结果的数据
 dataset['Forecast'] = np.nan
-
+print(dataset.head())
 #取data最后一行的时间索引
 last_date = dataset.iloc[-1].name
 #转化为时间戳
